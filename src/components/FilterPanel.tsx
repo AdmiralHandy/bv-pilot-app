@@ -1,23 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import TagBadge, { ALL_TAGS, getTagConfig } from "./TagBadge";
+import { ALL_TAGS, getTagConfig } from "./TagBadge";
+
+export interface SkillFilter {
+  value: number | null;
+  direction: "lte" | "gte";
+}
 
 export interface Filters {
   tags: string[];
-  teamFightingMax: number | null;
-  duellingMax: number | null;
-  leadershipMax: number | null;
+  teamFighting: SkillFilter;
+  duelling: SkillFilter;
+  leadership: SkillFilter;
   noOpenGoal: boolean;
   dateFrom: string;
   dateTo: string;
 }
 
+const defaultSkill: SkillFilter = { value: null, direction: "lte" };
+
 export const DEFAULT_FILTERS: Filters = {
   tags: [],
-  teamFightingMax: null,
-  duellingMax: null,
-  leadershipMax: null,
+  teamFighting: { ...defaultSkill },
+  duelling: { ...defaultSkill },
+  leadership: { ...defaultSkill },
   noOpenGoal: false,
   dateFrom: "",
   dateTo: "",
@@ -26,9 +33,9 @@ export const DEFAULT_FILTERS: Filters = {
 export function hasActiveFilters(filters: Filters): boolean {
   return (
     filters.tags.length > 0 ||
-    filters.teamFightingMax !== null ||
-    filters.duellingMax !== null ||
-    filters.leadershipMax !== null ||
+    filters.teamFighting.value !== null ||
+    filters.duelling.value !== null ||
+    filters.leadership.value !== null ||
     filters.noOpenGoal ||
     filters.dateFrom !== "" ||
     filters.dateTo !== ""
@@ -51,12 +58,25 @@ export default function FilterPanel({
     onChange({ ...filters, tags });
   };
 
-  const setSkillFilter = (
-    skill: "teamFightingMax" | "duellingMax" | "leadershipMax",
+  const setSkillValue = (
+    skill: "teamFighting" | "duelling" | "leadership",
     value: string
   ) => {
     const num = value === "" ? null : parseInt(value);
-    onChange({ ...filters, [skill]: num });
+    onChange({
+      ...filters,
+      [skill]: { ...filters[skill], value: num },
+    });
+  };
+
+  const setSkillDirection = (
+    skill: "teamFighting" | "duelling" | "leadership",
+    direction: "lte" | "gte"
+  ) => {
+    onChange({
+      ...filters,
+      [skill]: { ...filters[skill], direction },
+    });
   };
 
   const active = hasActiveFilters(filters);
@@ -118,28 +138,40 @@ export default function FilterPanel({
           {/* Skill Filters */}
           <div>
             <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">
-              Skill Rating (at or below)
+              Skill Rating
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {([
-                ["teamFightingMax", "Team Fighting"],
-                ["duellingMax", "Duelling"],
-                ["leadershipMax", "Leadership"],
+                ["teamFighting", "Team Fighting"],
+                ["duelling", "Duelling"],
+                ["leadership", "Leadership"],
               ] as const).map(([key, label]) => (
                 <div key={key}>
                   <label className="text-xs text-gray-400 block mb-1">{label}</label>
-                  <select
-                    value={filters[key] ?? ""}
-                    onChange={(e) => setSkillFilter(key, e.target.value)}
-                    className="w-full bg-input-bg border border-card-border rounded px-2 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple cursor-pointer"
-                  >
-                    <option value="">Any</option>
-                    <option value="1">☠ 1 or less</option>
-                    <option value="2">☠ 2 or less</option>
-                    <option value="3">☠ 3 or less</option>
-                    <option value="4">☠ 4 or less</option>
-                    <option value="5">☠ 5 or less</option>
-                  </select>
+                  <div className="flex gap-1.5">
+                    <select
+                      value={filters[key].direction}
+                      onChange={(e) =>
+                        setSkillDirection(key, e.target.value as "lte" | "gte")
+                      }
+                      className="bg-input-bg border border-card-border rounded px-1.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-purple cursor-pointer"
+                    >
+                      <option value="lte">≤</option>
+                      <option value="gte">≥</option>
+                    </select>
+                    <select
+                      value={filters[key].value ?? ""}
+                      onChange={(e) => setSkillValue(key, e.target.value)}
+                      className="flex-1 bg-input-bg border border-card-border rounded px-2 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple cursor-pointer"
+                    >
+                      <option value="">Any</option>
+                      <option value="1">☠ 1</option>
+                      <option value="2">☠ 2</option>
+                      <option value="3">☠ 3</option>
+                      <option value="4">☠ 4</option>
+                      <option value="5">☠ 5</option>
+                    </select>
+                  </div>
                 </div>
               ))}
             </div>

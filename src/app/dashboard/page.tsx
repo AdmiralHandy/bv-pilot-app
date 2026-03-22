@@ -92,16 +92,29 @@ export default function DashboardPage() {
     }
 
     // Filter by skill ratings
-    if (filters.teamFightingMax !== null) {
-      result = result.filter(
-        (p) => p.team_fighting <= filters.teamFightingMax!
+    if (filters.teamFighting.value !== null) {
+      const v = filters.teamFighting.value;
+      result = result.filter((p) =>
+        filters.teamFighting.direction === "lte"
+          ? p.team_fighting <= v
+          : p.team_fighting >= v
       );
     }
-    if (filters.duellingMax !== null) {
-      result = result.filter((p) => p.duelling <= filters.duellingMax!);
+    if (filters.duelling.value !== null) {
+      const v = filters.duelling.value;
+      result = result.filter((p) =>
+        filters.duelling.direction === "lte"
+          ? p.duelling <= v
+          : p.duelling >= v
+      );
     }
-    if (filters.leadershipMax !== null) {
-      result = result.filter((p) => p.leadership <= filters.leadershipMax!);
+    if (filters.leadership.value !== null) {
+      const v = filters.leadership.value;
+      result = result.filter((p) =>
+        filters.leadership.direction === "lte"
+          ? p.leadership <= v
+          : p.leadership >= v
+      );
     }
 
     // Filter by no open goal

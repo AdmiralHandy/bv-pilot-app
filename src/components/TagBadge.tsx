@@ -63,6 +63,16 @@ const TAG_CONFIG: Record<string, { label: string; color: string; bg: string; ico
       </svg>
     ),
   },
+  leadership_tag: {
+    label: "Leadership",
+    color: "text-purple-light",
+    bg: "bg-purple/10 border-purple/30",
+    icon: (
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L9 9H2l5.5 4.5L5 22l7-5 7 5-2.5-8.5L22 9h-7l-3-8zm0 3.5L14 9h4.5l-3.5 2.7 1.3 4.5L12 13l-4.3 3.2 1.3-4.5L5.5 9H10l2-4.5z" />
+      </svg>
+    ),
+  },
 };
 
 export const ALL_TAGS = Object.keys(TAG_CONFIG);
