@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import AccessDenied from "@/components/AccessDenied";
 import SkullRating from "@/components/SkullRating";
 import GoalList from "@/components/GoalList";
+import TagBadge, { ALL_TAGS, getTagConfig } from "@/components/TagBadge";
 
 interface Pilot {
   id: string;
@@ -15,6 +16,7 @@ interface Pilot {
   team_fighting: number;
   duelling: number;
   leadership: number;
+  tags: string[];
   updated_by: string | null;
 }
 
@@ -47,7 +49,7 @@ export default function PilotDetailPage({
       .eq("id", id)
       .single();
     if (data) {
-      setPilot(data);
+      setPilot({ ...data, tags: data.tags || [] });
       setEditName(data.name);
     }
   }, [id, supabase]);
@@ -95,10 +97,26 @@ export default function PilotDetailPage({
     }
   };
 
+  const toggleTag = async (tag: string) => {
+    if (!pilot) return;
+    const newTags = pilot.tags.includes(tag)
+      ? pilot.tags.filter((t) => t !== tag)
+      : [...pilot.tags, tag];
+    const { error } = await supabase
+      .from("pilots")
+      .update({ tags: newTags, updated_by: username })
+      .eq("id", id);
+    if (!error) {
+      setPilot({ ...pilot, tags: newTags, updated_by: username });
+    }
+  };
+
   if (allowed === null || loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">{allowed === null ? "Checking access..." : "Loading pilot..."}</p>
+        <p className="text-gray-500">
+          {allowed === null ? "Checking access..." : "Loading pilot..."}
+        </p>
       </div>
     );
   }
@@ -186,6 +204,50 @@ export default function PilotDetailPage({
           {pilot.updated_by && (
             <p className="text-xs text-gray-600">
               Last updated by {pilot.updated_by}
+            </p>
+          )}
+        </div>
+
+        {/* Tags */}
+        <div className="bg-card-bg border border-card-border rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold text-purple-light mb-3">
+            Tags
+          </h2>
+
+          {/* Current tags */}
+          {pilot.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {pilot.tags.map((tag) => (
+                <TagBadge
+                  key={tag}
+                  tag={tag}
+                  size="md"
+                  removable
+                  onRemove={() => toggleTag(tag)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Add tags */}
+          <div className="flex flex-wrap gap-2">
+            {ALL_TAGS.filter((t) => !pilot.tags.includes(t)).map((tag) => {
+              const config = getTagConfig(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`inline-flex items-center gap-1 border border-card-border rounded-full px-2.5 py-1 text-xs text-gray-500 hover:${config.color} hover:border-current transition-colors cursor-pointer`}
+                >
+                  {config.icon}
+                  + {config.label}
+                </button>
+              );
+            })}
+          </div>
+          {pilot.tags.length === 0 && (
+            <p className="text-xs text-gray-600 mt-2">
+              Click a tag above to add it.
             </p>
           )}
         </div>
