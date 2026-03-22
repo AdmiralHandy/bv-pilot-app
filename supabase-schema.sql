@@ -7,6 +7,8 @@ create table pilots (
   team_fighting int not null default 0 check (team_fighting >= 0 and team_fighting <= 5),
   duelling int not null default 0 check (duelling >= 0 and duelling <= 5),
   leadership int not null default 0 check (leadership >= 0 and leadership <= 5),
+  notes text not null default '',
+  notes_updated_at timestamptz,
   created_at timestamptz not null default now(),
   updated_by text
 );

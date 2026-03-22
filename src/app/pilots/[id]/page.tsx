@@ -17,6 +17,8 @@ interface Pilot {
   duelling: number;
   leadership: number;
   tags: string[];
+  notes: string;
+  notes_updated_at: string | null;
   updated_by: string | null;
 }
 
@@ -40,6 +42,9 @@ export default function PilotDetailPage({
   const [goals, setGoals] = useState<Goal[]>([]);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [notesSaved, setNotesSaved] = useState(true);
+  const [notesSaving, setNotesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchPilot = useCallback(async () => {
@@ -49,8 +54,9 @@ export default function PilotDetailPage({
       .eq("id", id)
       .single();
     if (data) {
-      setPilot({ ...data, tags: data.tags || [] });
+      setPilot({ ...data, tags: data.tags || [], notes: data.notes || "" });
       setEditName(data.name);
+      setNotes(data.notes || "");
     }
   }, [id, supabase]);
 
@@ -109,6 +115,21 @@ export default function PilotDetailPage({
     if (!error) {
       setPilot({ ...pilot, tags: newTags, updated_by: username });
     }
+  };
+
+  const saveNotes = async () => {
+    if (!pilot) return;
+    setNotesSaving(true);
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from("pilots")
+      .update({ notes, notes_updated_at: now, updated_by: username })
+      .eq("id", id);
+    if (!error) {
+      setPilot({ ...pilot, notes, notes_updated_at: now, updated_by: username });
+      setNotesSaved(true);
+    }
+    setNotesSaving(false);
   };
 
   if (allowed === null || loading) {
@@ -274,6 +295,51 @@ export default function PilotDetailPage({
               onRate={(v) => updateSkill("leadership", v)}
             />
           </div>
+        </div>
+
+        {/* General Notes */}
+        <div className="bg-card-bg border border-card-border rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-purple-light">
+              General Notes
+            </h2>
+            <div className="flex items-center gap-3">
+              {pilot.notes_updated_at && (
+                <p className="text-xs text-gray-600">
+                  Last edited{" "}
+                  {new Date(pilot.notes_updated_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+              {!notesSaved && (
+                <button
+                  onClick={saveNotes}
+                  disabled={notesSaving}
+                  className="text-sm px-3 py-1 bg-purple text-white rounded hover:bg-purple/80 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {notesSaving ? "Saving..." : "Save"}
+                </button>
+              )}
+            </div>
+          </div>
+          <textarea
+            value={notes}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              setNotesSaved(false);
+            }}
+            placeholder="Add general notes about this pilot..."
+            rows={5}
+            className="w-full bg-input-bg border border-card-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-gray-600 focus:outline-none focus:border-purple resize-y"
+          />
+          {notesSaved && notes.length > 0 && (
+            <p className="text-xs text-green-600 mt-1">✓ Saved</p>
+          )}
         </div>
 
         {/* Goals */}
